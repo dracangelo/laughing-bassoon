@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  customer
+  b2b
+  admin
+}
+
+enum LookupSource {
+  api
+  db
+  cache
+}
+
+model Turbo {
+  id        Int         @id @default(autoincrement())
+  sku       String      @unique
+  make      String
+  model     String
+  year      Int?
+  engine    String
+  bhp       Int?
+  type      String
+  price     Decimal     @db.Decimal(10, 2)
+  stock     Int         @default(0)
+  images    Json?
+  seoSlug   String      @unique @map("seo_slug")
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+  items     OrderItem[]
+
+  @@index([make, model, engine])
+  @@map("turbos")
+}
+
+model Vehicle {
+  id           Int         @id @default(autoincrement())
+  registration String      @unique
+  make         String?
+  model        String?
+  year         Int?
+  engine       String?
+  fuel         String?
+  colour       String?
+  source       LookupSource
+  createdAt    DateTime    @default(now()) @map("created_at")
+  lookups      LookupLog[]
+
+  @@map("vehicles")
+}
+
+model LookupLog {
+  id           Int          @id @default(autoincrement())
+  registration String
+  source       LookupSource
+  timestamp    DateTime     @default(now())
+  userIp       String?      @map("user_ip")
+  vehicleId    Int?
+  vehicle      Vehicle?     @relation(fields: [vehicleId], references: [id])
+
+  @@index([registration])
+  @@map("lookup_log")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         UserRole  @default(customer)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  orders       Order[]
+
+  @@map("users")
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  userId          Int?        @map("user_id")
+  user            User?       @relation(fields: [userId], references: [id])
+  status          String      @default("pending")
+  total           Decimal     @db.Decimal(10, 2)
+  stripePaymentId String?     @map("stripe_payment_id")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  items           OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int     @map("order_id")
+  turboId   Int     @map("turbo_id")
+  quantity  Int
+  unitPrice Decimal @map("unit_price") @db.Decimal(10, 2)
+  order     Order   @relation(fields: [orderId], references: [id])
+  turbo     Turbo   @relation(fields: [turboId], references: [id])
+
+  @@map("order_items")
+}
+
+model IpBlock {
+  id          Int      @id @default(autoincrement())
+  ipAddress   String   @unique @map("ip_address")
+  reason      String
+  redirectUrl String?  @map("redirect_url")
+  blockedAt   DateTime @default(now()) @map("blocked_at")
+
+  @@map("ip_blocks")
+}

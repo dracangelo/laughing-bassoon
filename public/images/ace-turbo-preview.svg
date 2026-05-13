@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Ace Turbo social preview</title>
+  <desc id="desc">A branded Ace Turbo preview image with red and blue speed trails and a turbocharger mark.</desc>
+  <rect width="1200" height="630" fill="#f6f8fa"/>
+  <path d="M0 0h505l-28 55H0z" fill="#0868a8"/>
+  <path d="M1200 0H695l28 55h477z" fill="#e1262b"/>
+  <rect y="112" width="1200" height="320" fill="#07090d"/>
+  <path d="M180 430 560 112h94L270 430z" fill="#e1262b" opacity=".78"/>
+  <path d="M438 430 790 112h62L530 430z" fill="#f7b267" opacity=".62"/>
+  <circle cx="360" cy="330" r="112" fill="#c9cdd1"/>
+  <circle cx="360" cy="330" r="76" fill="#f0f2f3" stroke="#70777d" stroke-width="20"/>
+  <circle cx="360" cy="330" r="38" fill="#282d32"/>
+  <path d="M446 232 710 120c76-32 166 20 166 103 0 91-100 142-176 92L448 250z" fill="#d4d7da" stroke="#777e84" stroke-width="18"/>
+  <circle cx="744" cy="222" r="78" fill="#f0f2f3" stroke="#70777d" stroke-width="20"/>
+  <circle cx="744" cy="222" r="42" fill="#282d32"/>
+  <text x="590" y="330" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="84" font-weight="900" font-style="italic" fill="#0868a8">ACE</text>
+  <text x="748" y="330" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="84" font-weight="900" font-style="italic" fill="#e1262b">TURBO</text>
+  <text x="594" y="384" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="32" font-weight="700" fill="#ffffff">Find turbochargers by reg, part or vehicle</text>
+</svg>

@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --ace-blue: #4f9fd6;
+  --ace-red: #db6258;
+  --ace-ink: #d9e2ea;
+  --ace-paper: #11161b;
+  --ace-steel: #263441;
+  --ace-warm: #d3a24a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(79, 159, 214, 0.14), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(211, 162, 74, 0.08), transparent 22%),
+    linear-gradient(180deg, #0b0f13 0%, var(--ace-paper) 100%);
+  color: var(--ace-ink);
+}
+
+select,
+input,
+button {
+  font: inherit;
+}
+
+.header-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(79, 159, 214, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79, 159, 214, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+
+.ace-hero {
+  background:
+    linear-gradient(135deg, rgba(17, 22, 27, 0.98), rgba(14, 19, 24, 0.96)),
+    linear-gradient(120deg, rgba(79, 159, 214, 0.08), rgba(211, 162, 74, 0.04));
+}
+
+.ace-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(79, 159, 214, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79, 159, 214, 0.08) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.75), transparent 92%);
+}
+
+.ace-hero::after {
+  content: "";
+  position: absolute;
+  right: 6%;
+  top: 14%;
+  width: min(32vw, 420px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(8, 104, 168, 0.18);
+  border: 1px solid rgba(79, 159, 214, 0.18);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 38% 40%, rgba(79, 159, 214, 0.22), transparent 22%),
+    radial-gradient(circle at 72% 66%, rgba(211, 162, 74, 0.24), transparent 20%),
+    linear-gradient(135deg, rgba(27, 35, 43, 0.88), rgba(38, 52, 65, 0.3));
+  transform: rotate(10deg);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.22);
+}
+
+.part-search {
+  border-radius: 999px;
+}
+
+.turbo-art text {
+  font-family: Arial, sans-serif;
+}
+
+.angle-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.angle-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 12px;
+  background: linear-gradient(180deg, var(--ace-blue), var(--ace-red));
+}
+
+.machine-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(130deg, transparent 0 76%, rgba(79, 159, 214, 0.11) 76% 78%, transparent 78% 100%),
+    linear-gradient(130deg, transparent 0 84%, rgba(211, 162, 74, 0.09) 84% 86%, transparent 86% 100%);
+}
