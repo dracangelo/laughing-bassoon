@@ -12,6 +12,8 @@ The current implementation includes:
 - Registration lookup sanitisation, logging, Redis-backed cache/rate limiting when configured, and signed export protection for data-heavy product exports
 - GA4/GTM hooks, sitemap, robots, Open Graph/Twitter metadata, and product Schema.org markup
 - Cloudflare IP block sync hook, migration script for legacy data, and external audit tracking endpoint
+- AdSense-ready placement zones that activate when `NEXT_PUBLIC_ADSENSE_CLIENT` is configured
+- Prisma migration SQL, public icons, reusable UI/product/cart components, and operational scripts for Cloudflare/security checks
 
 ## Run
 
@@ -21,6 +23,14 @@ npm run dev
 ```
 
 Copy `.env.example` to `.env.local` and fill production credentials before enabling real external integrations.
+
+Useful operational commands:
+
+```bash
+npm run migrate:existing
+npm run cloudflare:configure
+npm run audit:external
+```
 
 ## Development Access
 

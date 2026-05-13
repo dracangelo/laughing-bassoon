@@ -1,4 +1,5 @@
 import Script from "next/script";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { getTurboContent } from "@/lib/turboContent";
 import type { StoredTurbo } from "@/lib/persistence";
@@ -121,6 +122,7 @@ export function TurboDetail({
               <li>• Retain diagnostic notes for warranty-backed claims.</li>
             </ul>
           </article>
+          <AdSlot slot="2480110013" />
         </aside>
       </div>
     </main>

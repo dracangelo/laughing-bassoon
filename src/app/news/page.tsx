@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { listBlogPosts } from "@/lib/blog";
 
 export default async function NewsPage() {
@@ -7,6 +8,7 @@ export default async function NewsPage() {
     <main className="mx-auto max-w-[980px] px-4 py-12">
       <h1 className="mb-3 text-4xl font-black text-slate-100">Advice & News</h1>
       <p className="mb-8 text-slate-400">SEO content pages for diagnostics, buying advice, workshop workflow, and maintenance.</p>
+      <AdSlot className="mb-6" slot="2480110012" />
       <div className="grid gap-4">
         {posts.map((post) => (
           <article className="rounded-[28px] border border-slate-800 bg-[#141b22] p-6" key={post.id}>

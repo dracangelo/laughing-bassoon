@@ -1,3 +1,4 @@
+import { AdSlot } from "@/components/ads/AdSlot";
 import { BrandLogos } from "@/components/homepage/BrandLogos";
 import { FeaturedTurbos } from "@/components/homepage/FeaturedTurbos";
 import { HeroCarousel } from "@/components/homepage/HeroCarousel";
@@ -62,6 +63,9 @@ export default function HomePage() {
             <p className="text-sm leading-6 text-slate-400">The hidden admin area, lookup reporting, SEO generation and eBay listing tools remain intact behind the new visual direction.</p>
           </article>
         </div>
+      </section>
+      <section className="mx-auto max-w-[1180px] px-4 pb-8">
+        <AdSlot slot="2480110011" />
       </section>
       <FeaturedTurbos />
     </main>

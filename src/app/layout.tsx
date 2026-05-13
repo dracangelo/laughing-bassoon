@@ -27,6 +27,10 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "/"
+  },
+  icons: {
+    icon: "/icons/favicon.svg",
+    apple: "/icons/icon-192.svg"
   }
 };
 
