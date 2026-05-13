@@ -5,7 +5,8 @@ import { getSessionUser } from "@/lib/auth";
 import { sendOrderEmail } from "@/lib/email";
 import { createInvoiceNumber } from "@/lib/invoice";
 import { buildCartView, clearCart } from "@/lib/cart";
-import { nextId, readAppData, updateAppData, type StoredOrder } from "@/lib/persistence";
+import { type StoredOrder } from "@/lib/persistence";
+import { createOrderRecord, getOrderRecordById, getOrdersForUser, updateOrderPaymentRecord } from "@/lib/data-access";
 
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 12 },
@@ -35,54 +36,46 @@ function InvoiceDocument({ order }: { order: StoredOrder }) {
 }
 
 export async function createOrderFromCart(payload: { email: string; shippingAddress: string }) {
-  const user = getSessionUser();
+  const user = await getSessionUser();
   const cart = await buildCartView();
   if (!cart.items.length) throw new Error("Your cart is empty.");
 
-  const order = await updateAppData((data) => {
-    const id = nextId(data.orders);
-    const created: StoredOrder = {
-      id,
-      userId: user?.id,
-      email: payload.email,
-      status: "pending_payment",
-      total: cart.total,
-      invoiceNumber: createInvoiceNumber(id),
-      shippingAddress: payload.shippingAddress,
-      items: cart.items.map((item) => ({
-        turboId: item!.turboId,
-        sku: item!.sku,
-        name: item!.name,
-        quantity: item!.quantity,
-        unitPrice: item!.unitPrice
-      })),
-      createdAt: new Date().toISOString()
-    };
-    data.orders.push(created);
-    return created;
+  const tempInvoice = createInvoiceNumber(Date.now());
+  const order = await createOrderRecord({
+    userId: user?.id,
+    email: payload.email,
+    status: "pending_payment",
+    total: cart.total,
+    invoiceNumber: tempInvoice,
+    shippingAddress: payload.shippingAddress,
+    items: cart.items.map((item) => ({
+      turboId: item!.turboId,
+      sku: item!.sku,
+      name: item!.name,
+      quantity: item!.quantity,
+      unitPrice: item!.unitPrice
+    }))
   });
 
   await clearCart();
+  if (!order.invoiceNumber || order.invoiceNumber === tempInvoice) {
+    order.invoiceNumber = createInvoiceNumber(order.id);
+    await updateOrderPaymentRecord(order.id, { invoiceNumber: order.invoiceNumber });
+  }
   return order;
 }
 
 export async function markOrderPaid(orderId: number, stripePaymentId?: string, stripeSessionId?: string) {
-  const order = await updateAppData((data) => {
-    const existing = data.orders.find((entry) => entry.id === orderId);
-    if (!existing) return null;
-    existing.status = "paid";
-    existing.stripePaymentId = stripePaymentId;
-    existing.stripeSessionId = stripeSessionId;
-    return existing;
+  const order = await updateOrderPaymentRecord(orderId, {
+    status: "paid",
+    stripePaymentId,
+    stripeSessionId
   });
 
   if (!order) return null;
   const invoicePath = await generateInvoicePdf(order);
   order.invoicePath = invoicePath;
-  await updateAppData((data) => {
-    const existing = data.orders.find((entry) => entry.id === order.id);
-    if (existing) existing.invoicePath = invoicePath;
-  });
+  await updateOrderPaymentRecord(order.id, { invoicePath });
   await sendOrderEmail(
     order.email,
     `Ace Turbo order ${order.invoiceNumber}`,
@@ -101,11 +94,11 @@ export async function generateInvoicePdf(order: StoredOrder) {
 }
 
 export async function listOrdersForCurrentUser() {
-  const user = getSessionUser();
+  const user = await getSessionUser();
   if (!user) return [];
-  return (await readAppData()).orders.filter((order) => order.userId === user.id || order.email === user.email);
+  return getOrdersForUser(user.id, user.email);
 }
 
 export async function getOrderById(id: number) {
-  return (await readAppData()).orders.find((order) => order.id === id) || null;
+  return getOrderRecordById(id);
 }

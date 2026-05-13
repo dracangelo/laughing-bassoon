@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" fill="none">
+  <rect width="960" height="720" fill="#11171d"/>
+  <circle cx="358" cy="356" r="176" fill="#c3ccd5"/>
+  <circle cx="358" cy="356" r="112" fill="#f2f5f8"/>
+  <circle cx="358" cy="356" r="44" fill="#56616d"/>
+  <path d="M480 256h214v172H578c-54 0-98-44-98-98z" fill="#d6dde4"/>
+  <path d="M652 226l80 80" stroke="#db6258" stroke-width="14" stroke-linecap="round"/>
+  <text x="80" y="646" fill="#d9e2ea" font-family="Arial, sans-serif" font-size="38" font-weight="700">ACE BW K03</text>
+</svg>

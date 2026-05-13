@@ -1,6 +1,7 @@
 import { getSessionUser } from "@/lib/auth";
 import { getOrCreateSessionId } from "@/lib/session";
-import { nextId, readAppData, updateAppData, type StoredCart, type StoredCartItem } from "@/lib/persistence";
+import { readAppData, updateAppData, type StoredCart } from "@/lib/persistence";
+import { getTurboById } from "@/lib/data-access";
 
 function createCart(id: string, userId?: number): StoredCart {
   return {
@@ -14,7 +15,7 @@ function createCart(id: string, userId?: number): StoredCart {
 
 export async function getCurrentCart() {
   const sessionId = getOrCreateSessionId();
-  const user = getSessionUser();
+  const user = await getSessionUser();
   const data = await readAppData();
   let cart = data.carts.find((entry) => entry.sessionId === sessionId || (user && entry.userId === user.id));
   if (!cart) {
@@ -27,9 +28,9 @@ export async function getCurrentCart() {
 }
 
 export async function addCartItem(turboId: number, quantity: number) {
+  const user = await getSessionUser();
   return updateAppData((data) => {
     const sessionId = getOrCreateSessionId();
-    const user = getSessionUser();
     let cart = data.carts.find((entry) => entry.sessionId === sessionId || (user && entry.userId === user.id));
     if (!cart) {
       cart = createCart(sessionId, user?.id);
@@ -44,9 +45,9 @@ export async function addCartItem(turboId: number, quantity: number) {
 }
 
 export async function updateCartItem(turboId: number, quantity: number) {
+  const user = await getSessionUser();
   return updateAppData((data) => {
     const sessionId = getOrCreateSessionId();
-    const user = getSessionUser();
     const cart = data.carts.find((entry) => entry.sessionId === sessionId || (user && entry.userId === user.id));
     if (!cart) return null;
     cart.items = cart.items
@@ -58,9 +59,9 @@ export async function updateCartItem(turboId: number, quantity: number) {
 }
 
 export async function clearCart() {
+  const user = await getSessionUser();
   return updateAppData((data) => {
     const sessionId = getOrCreateSessionId();
-    const user = getSessionUser();
     const cart = data.carts.find((entry) => entry.sessionId === sessionId || (user && entry.userId === user.id));
     if (cart) {
       cart.items = [];
@@ -71,10 +72,9 @@ export async function clearCart() {
 }
 
 export async function buildCartView() {
-  const data = await readAppData();
   const cart = await getCurrentCart();
-  const items = cart.items.map((item) => {
-    const turbo = data.turbos.find((entry) => entry.id === item.turboId);
+  const items = (await Promise.all(cart.items.map(async (item) => {
+    const turbo = await getTurboById(item.turboId);
     return turbo
       ? {
           turboId: turbo.id,
@@ -85,7 +85,7 @@ export async function buildCartView() {
           lineTotal: turbo.price * item.quantity
         }
       : null;
-  }).filter(Boolean);
+  }))).filter(Boolean);
   const total = items.reduce((sum, item) => sum + (item?.lineTotal || 0), 0);
   return { cart, items, total };
 }

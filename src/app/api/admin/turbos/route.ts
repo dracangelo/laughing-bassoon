@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { isAdmin, requireSessionUser } from "@/lib/auth";
-import { readAppData } from "@/lib/persistence";
 import { jsonError } from "@/lib/http";
+import { getTurbos } from "@/lib/data-access";
 
 export async function GET() {
-  const user = requireSessionUser();
+  const user = await requireSessionUser();
   if (!isAdmin(user)) return jsonError("Admin access required", 403);
-  return NextResponse.json({ turbos: (await readAppData()).turbos });
+  return NextResponse.json({ turbos: await getTurbos() });
 }

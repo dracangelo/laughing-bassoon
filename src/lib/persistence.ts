@@ -33,6 +33,19 @@ export type StoredUser = {
   createdAt: string;
 };
 
+export type StoredSession = {
+  id: string;
+  userId: number;
+  email: string;
+  role: "customer" | "b2b" | "admin";
+  userAgent?: string;
+  ipAddress?: string;
+  createdAt: string;
+  lastSeenAt: string;
+  expiresAt: string;
+  revokedAt?: string;
+};
+
 export type StoredCartItem = {
   turboId: number;
   quantity: number;
@@ -127,6 +140,7 @@ export type StoredSecurityAudit = {
 
 export type AppData = {
   users: StoredUser[];
+  sessions: StoredSession[];
   turbos: StoredTurbo[];
   carts: StoredCart[];
   orders: StoredOrder[];
@@ -150,6 +164,7 @@ const defaultData: AppData = {
       createdAt: new Date().toISOString()
     }
   ],
+  sessions: [],
   turbos: [
     {
       id: 1,

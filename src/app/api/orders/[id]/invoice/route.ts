@@ -5,7 +5,7 @@ import { getSessionUser } from "@/lib/auth";
 import { jsonError } from "@/lib/http";
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
-  const user = getSessionUser();
+  const user = await getSessionUser();
   if (!user) return jsonError("Authentication required", 401);
   const order = await getOrderById(Number(params.id));
   if (!order) return jsonError("Order not found", 404);

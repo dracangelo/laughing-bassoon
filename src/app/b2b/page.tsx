@@ -1,8 +1,8 @@
 import { getSessionUser, isB2B } from "@/lib/auth";
 import Link from "next/link";
 
-export default function B2BPage() {
-  const user = getSessionUser();
+export default async function B2BPage() {
+  const user = await getSessionUser();
   return (
     <main className="mx-auto max-w-[900px] px-4 py-12">
       <h1 className="mb-4 text-4xl font-black text-slate-100">B2B Area</h1>

@@ -1,5 +1,5 @@
 import { readAppData, updateAppData, nextId, type StoredBlogPost } from "@/lib/persistence";
-import { sanitizeText, slugify } from "@/lib/sanitize";
+import { sanitizeHtmlInput, sanitizeText, slugify } from "@/lib/sanitize";
 
 export async function listBlogPosts() {
   return (await readAppData()).blogPosts.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
@@ -17,7 +17,7 @@ export async function upsertBlogPost(input: Omit<StoredBlogPost, "id" | "slug"> 
       slug,
       title: sanitizeText(input.title, 120),
       excerpt: sanitizeText(input.excerpt, 200),
-      body: sanitizeText(input.body, 5000),
+      body: sanitizeHtmlInput(input.body, 5000),
       coverImage: input.coverImage,
       publishedAt: input.publishedAt,
       tags: input.tags.map((tag) => slugify(tag))

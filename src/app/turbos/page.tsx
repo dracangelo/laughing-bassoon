@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getSessionUser, isB2B } from "@/lib/auth";
-import { readAppData } from "@/lib/persistence";
+import { getTurbos } from "@/lib/data-access";
+import type { StoredTurbo } from "@/lib/persistence";
 
 export const metadata: Metadata = {
   title: "Turbo Search",
@@ -11,8 +12,15 @@ export const metadata: Metadata = {
 
 export default async function TurbosPage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
   const partNumber = typeof searchParams.partNumber === "string" ? searchParams.partNumber : "";
-  const user = getSessionUser();
-  const turbos = (await readAppData()).turbos.filter((item) => !partNumber || item.sku.includes(partNumber.toUpperCase()));
+  const user = await getSessionUser();
+  const turbos = await getTurbos({
+    partNumber: partNumber ? partNumber.toUpperCase() : undefined,
+    make: typeof searchParams.make === "string" ? searchParams.make : undefined,
+    model: typeof searchParams.model === "string" ? searchParams.model : undefined,
+    engine: typeof searchParams.engine === "string" ? searchParams.engine : undefined,
+    year: typeof searchParams.year === "string" && searchParams.year ? Number(searchParams.year) : undefined,
+    bhp: typeof searchParams.bhp === "string" && searchParams.bhp ? Number(searchParams.bhp) : undefined
+  });
 
   return (
     <main className="mx-auto max-w-[1080px] px-4 py-12">
@@ -32,7 +40,7 @@ export default async function TurbosPage({ searchParams }: { searchParams: Recor
         <button className="rounded-2xl bg-aceRed px-4 py-3 font-black text-[#140b0b] md:col-span-6" type="submit">Search stock</button>
       </form>
       <section className="mt-7 grid gap-4 md:grid-cols-2">
-        {turbos.map((turbo) => (
+        {turbos.map((turbo: StoredTurbo) => (
           <article className="rounded-[28px] border border-slate-800 bg-[#141b22] p-5" key={turbo.sku}>
             <h2 className="text-xl font-black text-slate-100">{turbo.sku}</h2>
             <p className="text-slate-400">{turbo.description}</p>

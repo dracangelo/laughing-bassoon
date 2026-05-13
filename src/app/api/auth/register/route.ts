@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import { z } from "zod";
 import { registerUser, setAuthCookie } from "@/lib/auth";
 import { createSessionToken } from "@/lib/auth-token";
@@ -18,6 +19,11 @@ export async function POST(request: Request) {
   const parsed = schema.safeParse(await request.json());
   if (!parsed.success) return jsonError("Invalid registration details");
   const user = await registerUser(parsed.data);
-  setAuthCookie(createSessionToken(user));
+  const sessionId = crypto.randomUUID();
+  await setAuthCookie(createSessionToken(user, sessionId), user, {
+    sessionId,
+    userAgent: request.headers.get("user-agent") || undefined,
+    ipAddress: request.headers.get("x-forwarded-for") || undefined
+  });
   return NextResponse.json({ user, status: "registered" }, { status: 201 });
 }

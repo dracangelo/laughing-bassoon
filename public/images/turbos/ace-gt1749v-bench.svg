@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" fill="none">
+  <rect width="960" height="720" fill="#10161c"/>
+  <rect x="84" y="528" width="792" height="34" rx="17" fill="#263441"/>
+  <circle cx="338" cy="372" r="138" fill="#c7d0d9"/>
+  <circle cx="338" cy="372" r="92" fill="#eef2f6"/>
+  <path d="M454 236h196c44 0 80 36 80 80v56H576V316H454z" fill="#d5dce3"/>
+  <path d="M228 250l-74-78" stroke="#4f9fd6" stroke-width="12" stroke-linecap="round"/>
+  <path d="M166 232l-18 54" stroke="#4f9fd6" stroke-width="12" stroke-linecap="round"/>
+  <text x="94" y="646" fill="#d9e2ea" font-family="Arial, sans-serif" font-size="38" font-weight="700">Inspection bench</text>
+</svg>

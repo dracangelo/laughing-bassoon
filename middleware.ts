@@ -4,7 +4,11 @@ import { enforceIpBlock } from "@/lib/ipBlock";
 import { verifySessionToken } from "@/lib/auth-token";
 import { verifySignedResource } from "@/lib/resourceProtection";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname === "/api/auth/session-status") {
+    return NextResponse.next();
+  }
+
   const blocked = enforceIpBlock(request);
   if (blocked) return blocked;
 
@@ -29,6 +33,31 @@ export function middleware(request: NextRequest) {
     const loginUrl = new URL("/account", request.url);
     loginUrl.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (authCookie && (protectedPath || request.nextUrl.pathname.startsWith("/api/admin"))) {
+    try {
+      const user = verifySessionToken(authCookie);
+      const statusUrl = new URL("/api/auth/session-status", request.url);
+      statusUrl.searchParams.set("sid", user.sid);
+      const statusResponse = await fetch(statusUrl, {
+        headers: {
+          "x-middleware-check": "session"
+        }
+      });
+      if (statusResponse.ok) {
+        const status = await statusResponse.json();
+        if (!status.active) {
+          const loginUrl = new URL("/account", request.url);
+          loginUrl.searchParams.set("next", request.nextUrl.pathname);
+          return NextResponse.redirect(loginUrl);
+        }
+      }
+    } catch {
+      const loginUrl = new URL("/account", request.url);
+      loginUrl.searchParams.set("next", request.nextUrl.pathname);
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
   if (request.nextUrl.pathname.startsWith("/admin") || request.nextUrl.pathname.startsWith("/api/admin")) {

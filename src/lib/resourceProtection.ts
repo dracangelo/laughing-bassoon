@@ -17,6 +17,6 @@ export function verifySignedResource(path: string, expires: number, signature: s
   return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
 }
 
-export function canAccessProtectedResources() {
-  return Boolean(getSessionUser());
+export async function canAccessProtectedResources() {
+  return Boolean(await getSessionUser());
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import { z } from "zod";
 import { authenticateUser, setAuthCookie } from "@/lib/auth";
 import { createSessionToken } from "@/lib/auth-token";
@@ -17,6 +18,11 @@ export async function POST(request: Request) {
   if (!parsed.success) return jsonError("Invalid login details");
   const user = await authenticateUser(parsed.data.email, parsed.data.password);
   if (!user) return jsonError("Invalid email or password", 401);
-  setAuthCookie(createSessionToken(user));
+  const sessionId = crypto.randomUUID();
+  await setAuthCookie(createSessionToken(user, sessionId), user, {
+    sessionId,
+    userAgent: request.headers.get("user-agent") || undefined,
+    ipAddress: request.headers.get("x-forwarded-for") || undefined
+  });
   return NextResponse.json({ user, status: "authenticated" });
 }

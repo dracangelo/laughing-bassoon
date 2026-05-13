@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" fill="none">
+  <rect width="960" height="720" fill="#0f151b"/>
+  <rect x="172" y="168" width="616" height="388" rx="32" fill="#1a222b" stroke="#263441" stroke-width="10"/>
+  <rect x="230" y="236" width="500" height="252" rx="24" fill="#10161c" stroke="#4f9fd6" stroke-width="6" stroke-dasharray="18 14"/>
+  <circle cx="378" cy="362" r="92" fill="#cfd6de"/>
+  <circle cx="378" cy="362" r="56" fill="#eef2f6"/>
+  <path d="M498 300h150v120H552c-30 0-54-24-54-54z" fill="#d7dee5"/>
+  <text x="242" y="276" fill="#d9e2ea" font-family="Arial, sans-serif" font-size="34" font-weight="700">Dispatch protected</text>
+  <text x="94" y="646" fill="#d9e2ea" font-family="Arial, sans-serif" font-size="38" font-weight="700">Shelf + courier pack</text>
+</svg>

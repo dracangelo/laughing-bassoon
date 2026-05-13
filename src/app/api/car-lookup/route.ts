@@ -5,6 +5,7 @@ import { getRedis } from "@/lib/redis";
 import { logLookup } from "@/lib/lookup";
 import { jsonError } from "@/lib/http";
 import { rateLimit } from "@/lib/rateLimit";
+import { findVehicleByRegistration } from "@/lib/data-access";
 
 const inMemoryVehicleCache = new Map<string, unknown>();
 
@@ -25,6 +26,13 @@ export async function POST(request: Request) {
     const vehicle = JSON.parse(cached) as Record<string, unknown>;
     await logLookup(registration, "cache", userIp, vehicle);
     return NextResponse.json({ registration, source: "cache", vehicle });
+  }
+
+  const storedVehicle = await findVehicleByRegistration(registration);
+  if (storedVehicle) {
+    await redis?.set(cacheKey, JSON.stringify(storedVehicle), "EX", 60 * 60 * 24);
+    await logLookup(registration, "db", userIp, storedVehicle as unknown as Record<string, unknown>);
+    return NextResponse.json({ registration, source: "db", vehicle: storedVehicle });
   }
 
   if (inMemoryVehicleCache.has(registration)) {

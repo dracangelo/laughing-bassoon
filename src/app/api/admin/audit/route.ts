@@ -4,13 +4,13 @@ import { jsonError } from "@/lib/http";
 import { nextId, readAppData, updateAppData } from "@/lib/persistence";
 
 export async function GET() {
-  const user = requireSessionUser();
+  const user = await requireSessionUser();
   if (!isAdmin(user)) return jsonError("Admin access required", 403);
   return NextResponse.json({ audits: (await readAppData()).auditRuns });
 }
 
 export async function POST() {
-  const user = requireSessionUser();
+  const user = await requireSessionUser();
   if (!isAdmin(user)) return jsonError("Admin access required", 403);
   const audit = await updateAppData((data) => {
     const created = {

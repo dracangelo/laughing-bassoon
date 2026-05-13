@@ -1,21 +1,120 @@
-fully implement the missing features
+Ace Turbo implementation audit against `task.md`
 
-Real persistent shopping cart
-Real Stripe checkout and webhook fulfilment
-Order confirmation emails and invoice PDFs
-User registration and actual order history/invoice downloads
-Protected B2B trade pricing
-Contact form
-Full news/blog system
-Real admin CRUD for turbos, orders, users, IP blocks
-Lookup logging to database
-Rate limiting
-DOMPurify/server-side sanitisation usage across inputs
-Competitor resource protection via signed URLs/login walls
-GA4 and Tag Manager event tracking
-Schema.org product markup on product pages
-Existing data migration
-External security audit
-Cloudflare integration
-Real Redis-backed session/cache behavior in production
-Full eBay Trading API flow
+Status summary
+
+- Not all features in `task.md` are fully implemented yet.
+- The persistence layer has moved forward substantially: users, orders, turbos, vehicle records, lookup logs, and IP blocks now go through a Prisma-first repository with safe local fallback when live infrastructure is not configured.
+- The remaining work is now much narrower and more UI/infrastructure focused than before.
+
+Implemented well enough to count as present
+
+- Real persistent shopping cart
+- Real Stripe checkout and webhook fulfilment, when Stripe env vars are configured
+- Order confirmation emails and invoice PDFs
+- User registration, login, order history, and invoice downloads
+- Protected B2B trade pricing
+- Contact form and click-to-call
+- Basic news/blog system
+- Lookup logging
+- Rate limiting on core mutation endpoints
+- Competitor resource protection through signed protected exports and login walls
+- GA4 and GTM hooks
+- Schema.org product markup on product pages
+- Redis-backed cache/session hooks when Redis is configured
+- eBay Trading API submission flow when eBay credentials are configured
+- Prisma-first runtime access for users, turbos, orders, vehicles, lookup logs, and IP blocks when `DATABASE_URL` is real and Prisma client is generated
+- Backend turbo filtering for make, model, year, engine, BHP, and part number
+- Real rotating homepage hero carousel using `swiper`
+- Admin SEO link generation UI from live turbo records
+- Admin eBay listing creation UI with draft/submission history
+- Lookup stats panel component wired into the admin stats dashboard
+- Tracked auth sessions with revocation-aware validation and admin session inventory controls
+- XML sitemap route generated from live turbo and blog content
+- Product detail pages upgraded with structured specs, multi-image galleries, fitment notes, and workshop guidance
+- Account self-service session/device management
+- Middleware-side session-status check before protected pages continue
+
+Still missing or only partially implemented
+
+1. Product pages are materially richer, but still not fully migrated
+- Product pages now include richer specs, multiple local gallery assets, workshop notes, OEM references, and fuller technical sections.
+- They still need real legacy catalog content imported at scale instead of seeded/derived content for only part of the range.
+
+2. Admin CRUD is still partial, but the core management flows are now live
+- Turbo create, edit, and delete now work from the admin UI.
+- Order status updates now work from the admin UI.
+- User role changes and IP block create/remove now work from the admin UI.
+- SEO link generation now works from the admin UI.
+- eBay listing creation now works from the admin UI.
+- Session inventory and revoke actions now work from the admin UI.
+- Turbo validation summaries and management stats are now live.
+- Order and user panels now include richer reporting/detail context.
+- Still missing:
+  - deeper cross-entity reporting screens
+  - more advanced bulk operations and audit trails
+
+3. User/session management is improved, but still not complete
+- Session tracking and invalidation are now implemented.
+- Admins can view and revoke individual sessions or all sessions for a user.
+- Customers can now view and revoke their own sessions from the account area.
+- Middleware now checks current session status before protected requests continue.
+- Still missing:
+  - deeper device fingerprinting beyond parsed user agent and IP
+  - richer session audit detail and export/reporting
+
+4. DOMPurify server-side sanitisation is only partially complete
+- Shared sanitisation now has a DOMPurify-backed path and is wired into rich-text server handling.
+- The current workspace does not yet have `jsdom` installed, so the server path safely falls back to plain-text sanitisation until dependencies are refreshed.
+
+5. External security audit is not actually run
+- Audit scheduling/tracking exists.
+- No real Pentest Tools or Sucuri scan has been executed from this repo flow.
+
+6. HTTPS everywhere is not fully implemented in deploy infrastructure
+- App headers and docs are present.
+- Actual Cloudflare/Vercel HTTPS enforcement depends on deployment configuration outside the repo.
+
+7. Google AdSense / AdWords ready placement zones are still missing
+- Analytics hooks exist.
+- Explicit ad placement zones and ad-ready layout surfaces have not been implemented.
+
+8. Cloudflare integration is partial
+- IP block sync helper exists.
+- Full CDN/WAF/analytics/rules management is not implemented end to end in the app.
+
+9. Existing data migration is only scaffolded
+- A migration script/report exists.
+- It does not yet import real legacy Ace Turbo data into Prisma/MySQL or the runtime store.
+
+10. Production persistence still depends on real infrastructure setup
+- The Prisma-first repository is in place.
+- Live MySQL persistence still requires:
+  - valid `DATABASE_URL`
+  - `prisma generate`
+  - database migrations applied
+  - production deployment wired to the real database
+
+11. Full production Redis-backed behavior is still conditional
+- Redis support exists and is used when configured.
+- The app still falls back to local in-process/file behavior in development, so production-only Redis semantics are not guaranteed unless infra is present.
+
+12. Folder-structure items still missing from the spec
+- `public/icons/`
+- `prisma/migrations/`
+- `src/components/ui/Button.tsx`
+- `src/components/ui/Input.tsx`
+- `src/components/ui/Select.tsx`
+- `src/components/ui/Modal.tsx`
+- `src/components/ui/Table.tsx`
+- `src/components/turbos/TurboCard.tsx`
+- `src/components/turbos/TurboFilter.tsx`
+- `src/components/cart/CartDrawer.tsx`
+- `src/components/cart/CartItem.tsx`
+
+Priority next steps
+
+1. Make DOMPurify fully live on the server by refreshing dependencies so `jsdom` is installed, then verify the rich-text sanitisation path in API handlers.
+2. Add explicit AdSense / AdWords placement zones.
+3. Replace migration reporting with real import/mapping into Prisma.
+4. Add the missing reusable/component structure from the spec.
+5. Run and document a real external security audit on a deployed environment.

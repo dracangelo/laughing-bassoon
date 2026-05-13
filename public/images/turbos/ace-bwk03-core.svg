@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" fill="none">
+  <rect width="960" height="720" fill="#12181f"/>
+  <rect x="202" y="242" width="420" height="232" rx="116" fill="#d7dee5"/>
+  <circle cx="332" cy="358" r="98" fill="#f3f6f8"/>
+  <circle cx="516" cy="358" r="98" fill="#f3f6f8"/>
+  <circle cx="332" cy="358" r="36" fill="#4d5965"/>
+  <circle cx="516" cy="358" r="36" fill="#4d5965"/>
+  <path d="M630 300h134v116H630z" fill="#263441"/>
+  <text x="650" y="368" fill="#d9e2ea" font-family="Arial, sans-serif" font-size="28" font-weight="700">CHRA</text>
+  <text x="88" y="646" fill="#d9e2ea" font-family="Arial, sans-serif" font-size="38" font-weight="700">Core assembly</text>
+</svg>

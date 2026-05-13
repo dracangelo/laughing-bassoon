@@ -1,3 +1,4 @@
+import type { StoredOrder } from "@/lib/persistence";
 import Link from "next/link";
 import { listOrdersForCurrentUser } from "@/lib/orders";
 
@@ -8,7 +9,7 @@ export default async function AccountOrdersPage() {
     <main className="mx-auto max-w-[960px] px-4 py-12">
       <h1 className="mb-4 text-4xl font-black text-slate-100">Order History</h1>
       <div className="grid gap-4">
-        {orders.length ? orders.map((order) => (
+        {orders.length ? orders.map((order: StoredOrder) => (
           <article className="rounded-[28px] border border-slate-800 bg-[#141b22] p-6 shadow-ace" key={order.id}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
