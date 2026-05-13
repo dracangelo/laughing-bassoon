@@ -1,8 +1,8 @@
 export default function AdminPage() {
   return (
     <main className="mx-auto max-w-[1120px] px-4 py-10">
-      <h1 className="mb-3 text-5xl font-black">Admin Dashboard</h1>
-      <p className="mb-8 text-slate-600">Internal area for product data, lookups, orders, users, IP blocking, eBay listings and SEO link creation.</p>
+      <h1 className="mb-3 text-5xl font-black text-slate-100">Admin Dashboard</h1>
+      <p className="mb-8 text-slate-400">Internal area for product data, lookups, orders, users, IP blocking, eBay listings, SEO links, contact messages, and audit scheduling.</p>
       <div className="grid gap-4 md:grid-cols-3">
         {[
           ["/admin/turbos", "Turbo data entry"],
@@ -11,9 +11,10 @@ export default function AdminPage() {
           ["/admin/orders", "Order management"],
           ["/admin/users", "User/IP management"],
           ["/admin/ebay", "eBay listings"],
-          ["/admin/seo", "SEO links"]
+          ["/admin/seo", "SEO links"],
+          ["/admin/audit", "Security audit"]
         ].map(([href, label]) => (
-          <a className="bg-white p-5 font-black shadow-ace" href={href} key={href}>{label}</a>
+          <a className="rounded-[28px] border border-slate-800 bg-[#141b22] p-5 font-black text-slate-100 shadow-ace" href={href} key={href}>{label}</a>
         ))}
       </div>
     </main>

@@ -9,6 +9,7 @@ export function Header() {
           <Link href="/turbos">Find Turbos</Link>
           <Link href="/news">Advice</Link>
           <Link href="/news">News</Link>
+          <Link href="/contact">Contact</Link>
           <Link href="/brands">Genuine Turbochargers</Link>
         </div>
         <Link href="/" className="grid text-center uppercase leading-none" aria-label="Ace Turbo home">

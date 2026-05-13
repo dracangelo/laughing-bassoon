@@ -1,0 +1,21 @@
+fully implement the missing features
+
+Real persistent shopping cart
+Real Stripe checkout and webhook fulfilment
+Order confirmation emails and invoice PDFs
+User registration and actual order history/invoice downloads
+Protected B2B trade pricing
+Contact form
+Full news/blog system
+Real admin CRUD for turbos, orders, users, IP blocks
+Lookup logging to database
+Rate limiting
+DOMPurify/server-side sanitisation usage across inputs
+Competitor resource protection via signed URLs/login walls
+GA4 and Tag Manager event tracking
+Schema.org product markup on product pages
+Existing data migration
+External security audit
+Cloudflare integration
+Real Redis-backed session/cache behavior in production
+Full eBay Trading API flow

@@ -10,7 +10,8 @@
     "test": "jest",
     "test:e2e": "playwright test",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "migrate:existing": "node scripts/migrate-existing-data.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

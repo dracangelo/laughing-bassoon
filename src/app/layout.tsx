@@ -3,6 +3,7 @@ import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CookieBanner } from "@/components/layout/CookieBanner";
+import { AnalyticsScripts } from "@/components/layout/AnalyticsScripts";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://aceturbo.co.uk"),
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="font-sans antialiased">
+        <AnalyticsScripts />
         <Header />
         {children}
         <Footer />
