@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { sanitizeRegistration } from "@/lib/sanitize";
+import { sanitizeRegistration } from "@/lib/sanitize-strings";
 
 export function RegLookupForm() {
   const [message, setMessage] = useState("");

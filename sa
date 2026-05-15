@@ -4,6 +4,7 @@ Status summary
 
 - All repo-implementable features from `task.md` now have working code, routes, UI, scripts, or documented operational hooks.
 - A few items still require real production credentials, legacy source data, deployed infrastructure, or third-party dashboards before they can be called fully complete in the real world.
+- The project has been fully migrated away from Prisma to the `mysql2` pure JavaScript driver to ensure compatibility with Hostinger's standard shared hosting.
 
 Implemented in the repo
 
@@ -22,7 +23,7 @@ Implemented in the repo
 - Schema.org product markup on product pages
 - Redis-backed cache/session hooks when Redis is configured
 - eBay Trading API submission flow when eBay credentials are configured
-- Prisma-first runtime access for users, turbos, orders, vehicles, lookup logs, sessions, and IP blocks when `DATABASE_URL` is real and Prisma client is generated
+- Pure-JS `mysql2` raw SQL access for users, turbos, orders, vehicles, lookup logs, sessions, and IP blocks when `DATABASE_URL` is provided.
 - Backend turbo filtering for make, model, year, engine, BHP, and part number
 - Real rotating homepage hero carousel using `swiper`
 - Admin turbo create/edit/delete, validation summaries, and stock/value reporting
@@ -40,7 +41,7 @@ Implemented in the repo
 - Reusable turbo components: TurboCard, TurboFilter, TurboDetail
 - Reusable cart components: CartDrawer, CartItem
 - Public icons under `public/icons/`
-- Prisma migration SQL under `prisma/migrations/`
+- Database initialization script under `scripts/init-db.sql`
 - Real legacy-data importer script through `npm run migrate:existing`
 - Cloudflare baseline configuration script through `npm run cloudflare:configure`
 - External public security scan capture script through `npm run audit:external`
@@ -48,10 +49,9 @@ Implemented in the repo
 
 Remaining real-world activation items
 
-1. DOMPurify server runtime dependency needs a completed install
-- `dompurify` and the server-side sanitizer path are implemented.
-- `jsdom` is declared in `package.json`, but the current workspace does not have it installed in `node_modules` or locked in `package-lock.json` because the npm dependency refresh was interrupted.
-- Run `npm install` successfully, then verify `node -e "require('jsdom')"` before treating rich HTML preservation as fully live.
+1. Database initialization must be run on Hostinger
+- `scripts/init-db.sql` must be executed via phpMyAdmin on your Hostinger database to create the required tables.
+- Live MySQL persistence requires a valid `DATABASE_URL` format.
 
 2. External security audit must be run against a deployed site
 - `npm run audit:external` is implemented and writes `.data/security-audit-report.json`.
@@ -63,25 +63,21 @@ Remaining real-world activation items
 - Final HTTPS/WAF/CDN enforcement must be verified in the deployed Cloudflare/Vercel environment.
 
 4. Existing data migration requires a real legacy export
-- `npm run migrate:existing` now imports `data/existing-data.json` into Prisma/MySQL when `DATABASE_URL` is real, otherwise into the local JSON store.
+- `npm run migrate:existing` now imports `data/existing-data.json` into MySQL when `DATABASE_URL` is real, otherwise into the local JSON store.
 - Actual migrated catalog completeness depends on providing the legacy Ace Turbo export file.
 
-5. Production persistence requires infrastructure
-- Prisma schema and migration SQL are present.
-- Live MySQL persistence still requires a valid `DATABASE_URL`, `prisma generate`, migrations applied, and deployment wired to the database.
-
-6. Production Redis behavior requires infrastructure
+5. Production Redis behavior requires infrastructure
 - Redis hooks are present and used when `REDIS_URL` is set.
 - Local development still falls back to file/in-process behavior by design.
 
-7. Third-party commerce/marketing integrations require credentials
+6. Third-party commerce/marketing integrations require credentials
 - Stripe, SendGrid, DVLA, eBay, GA4, GTM, AdSense, and Cloudflare code paths are present.
 - They become live only after their env vars are configured and tested in deployment.
 
 Current priority
 
-1. Run `npm install` to complete `jsdom` installation and lockfile refresh.
-2. Provide real production env vars and run `prisma generate` plus migrations.
+1. Execute `scripts/init-db.sql` in your production database to create tables.
+2. Provide real production env vars (`DATABASE_URL`, etc).
 3. Provide `data/existing-data.json` and run `npm run migrate:existing`.
 4. Deploy behind Cloudflare/Vercel, then run `npm run cloudflare:configure` and `npm run audit:external`.
 5. Run browser/e2e checks against the deployed URL.

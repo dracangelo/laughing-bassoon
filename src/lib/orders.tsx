@@ -58,6 +58,7 @@ export async function createOrderFromCart(payload: { email: string; shippingAddr
   });
 
   await clearCart();
+  if (!order) throw new Error("Failed to retrieve created order");
   if (!order.invoiceNumber || order.invoiceNumber === tempInvoice) {
     order.invoiceNumber = createInvoiceNumber(order.id);
     await updateOrderPaymentRecord(order.id, { invoiceNumber: order.invoiceNumber });

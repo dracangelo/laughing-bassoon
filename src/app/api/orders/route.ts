@@ -22,6 +22,8 @@ export async function POST(request: Request) {
     shippingAddress: parsed.data.address
   });
 
+  if (!order) return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
+
   if (!stripe) {
     return NextResponse.json({
       order,

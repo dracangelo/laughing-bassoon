@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { sanitizePartNumber, sanitizeText, slugify } from "@/lib/sanitize";
+import { sanitizeText, slugify } from "@/lib/sanitize";
+import { sanitizePartNumber } from "@/lib/sanitize-strings";
 
 export const turboSchema = z.object({
   sku: z.string().transform(sanitizePartNumber).pipe(z.string().min(3).max(32)),

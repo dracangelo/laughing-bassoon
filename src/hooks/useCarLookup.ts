@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { sanitizeRegistration } from "@/lib/sanitize";
+import { sanitizeRegistration } from "@/lib/sanitize-strings";
 
 export function useCarLookup() {
   const [loading, setLoading] = useState(false);

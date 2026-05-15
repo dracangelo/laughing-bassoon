@@ -1,4 +1,4 @@
-import { sanitizePartNumber } from "@/lib/sanitize";
+import { sanitizePartNumber } from "@/lib/sanitize-strings";
 
 export function createEbayListingDraft(input: { listingType: "Turbo" | "CHRA"; turboNumber: string; title: string }) {
   return {

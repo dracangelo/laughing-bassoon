@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { pool } from "@/lib/db";
 import {
   nextId,
   readAppData,
@@ -20,7 +20,7 @@ type TurboSearch = {
   bhp?: number;
 };
 
-function usePrisma() {
+function useMysql() {
   const url = process.env.DATABASE_URL;
   return Boolean(url && !url.includes("user:pass@host"));
 }
@@ -36,13 +36,13 @@ function mapTurbo(row: any): StoredTurbo {
     bhp: row.bhp ?? undefined,
     type: row.type,
     price: Number(row.price),
-    tradePrice: row.tradePrice != null ? Number(row.tradePrice) : undefined,
+    tradePrice: row.trade_price != null || row.tradePrice != null ? Number(row.trade_price ?? row.tradePrice) : undefined,
     stock: row.stock,
-    seoSlug: row.seoSlug,
+    seoSlug: row.seo_slug ?? row.seoSlug,
     description: row.description || "",
-    images: Array.isArray(row.images) ? row.images : [],
-    createdAt: new Date(row.createdAt).toISOString(),
-    updatedAt: new Date(row.updatedAt).toISOString()
+    images: typeof row.images === 'string' ? JSON.parse(row.images) : (Array.isArray(row.images) ? row.images : []),
+    createdAt: new Date(row.created_at ?? row.createdAt).toISOString(),
+    updatedAt: new Date(row.updated_at ?? row.updatedAt).toISOString()
   };
 }
 
@@ -50,51 +50,51 @@ function mapUser(row: any): StoredUser {
   return {
     id: row.id,
     email: row.email,
-    passwordHash: row.passwordHash,
+    passwordHash: row.password_hash ?? row.passwordHash,
     role: row.role,
-    firstName: row.firstName || "",
-    lastName: row.lastName || "",
+    firstName: row.first_name ?? row.firstName ?? "",
+    lastName: row.last_name ?? row.lastName ?? "",
     company: row.company || undefined,
     phone: row.phone || undefined,
-    createdAt: new Date(row.createdAt).toISOString()
+    createdAt: new Date(row.created_at ?? row.createdAt).toISOString()
   };
 }
 
 function mapSession(row: any): StoredSession {
   return {
     id: row.id,
-    userId: row.userId,
+    userId: row.user_id ?? row.userId,
     email: row.email,
     role: row.role,
-    userAgent: row.userAgent || undefined,
-    ipAddress: row.ipAddress || undefined,
-    createdAt: new Date(row.createdAt).toISOString(),
-    lastSeenAt: new Date(row.lastSeenAt).toISOString(),
-    expiresAt: new Date(row.expiresAt).toISOString(),
-    revokedAt: row.revokedAt ? new Date(row.revokedAt).toISOString() : undefined
+    userAgent: row.user_agent ?? row.userAgent ?? undefined,
+    ipAddress: row.ip_address ?? row.ipAddress ?? undefined,
+    createdAt: new Date(row.created_at ?? row.createdAt).toISOString(),
+    lastSeenAt: new Date(row.last_seen_at ?? row.lastSeenAt).toISOString(),
+    expiresAt: new Date(row.expires_at ?? row.expiresAt).toISOString(),
+    revokedAt: (row.revoked_at ?? row.revokedAt) ? new Date(row.revoked_at ?? row.revokedAt).toISOString() : undefined
   };
 }
 
 function mapOrder(row: any): StoredOrder {
   return {
     id: row.id,
-    userId: row.userId ?? undefined,
+    userId: row.user_id ?? row.userId ?? undefined,
     email: row.email || "",
     status: row.status,
     total: Number(row.total),
-    stripePaymentId: row.stripePaymentId || undefined,
-    stripeSessionId: row.stripeSessionId || undefined,
-    invoiceNumber: row.invoiceNumber || "",
-    invoicePath: row.invoicePath || undefined,
-    shippingAddress: row.shippingAddress || "",
-    createdAt: new Date(row.createdAt).toISOString(),
+    stripePaymentId: row.stripe_payment_id ?? row.stripePaymentId ?? undefined,
+    stripeSessionId: row.stripe_session_id ?? row.stripeSessionId ?? undefined,
+    invoiceNumber: row.invoice_number ?? row.invoiceNumber ?? "",
+    invoicePath: row.invoice_path ?? row.invoicePath ?? undefined,
+    shippingAddress: row.shipping_address ?? row.shippingAddress ?? "",
+    createdAt: new Date(row.created_at ?? row.createdAt).toISOString(),
     items: Array.isArray(row.items)
       ? row.items.map((item: any) => ({
-          turboId: item.turboId,
+          turboId: item.turbo_id ?? item.turboId,
           sku: item.sku || item.turbo?.sku || "",
           name: item.name || `${item.turbo?.make || ""} ${item.turbo?.model || ""} ${item.turbo?.engine || ""}`.trim(),
           quantity: item.quantity,
-          unitPrice: Number(item.unitPrice)
+          unitPrice: Number(item.unit_price ?? item.unitPrice)
         }))
       : []
   };
@@ -105,7 +105,7 @@ function mapLookup(row: any): StoredLookup {
     id: row.id,
     registration: row.registration,
     source: row.source,
-    userIp: row.userIp || undefined,
+    userIp: row.user_ip ?? row.userIp ?? undefined,
     vehicle: row.vehicle
       ? {
           registration: row.vehicle.registration,
@@ -122,35 +122,30 @@ function mapLookup(row: any): StoredLookup {
 }
 
 export async function getUsers() {
-  if (usePrisma()) {
-    const rows = await (prisma as any).user.findMany({ orderBy: { createdAt: "asc" } });
-    return rows.map(mapUser);
+  if (useMysql()) {
+    const [rows] = await pool.query("SELECT * FROM users ORDER BY created_at ASC");
+    return (rows as any[]).map(mapUser);
   }
   return (await readAppData()).users;
 }
 
 export async function findUserByEmail(email: string) {
-  if (usePrisma()) {
-    const row = await (prisma as any).user.findUnique({ where: { email } });
-    return row ? mapUser(row) : null;
+  if (useMysql()) {
+    const [rows] = await pool.query("SELECT * FROM users WHERE email = ? LIMIT 1", [email]);
+    return (rows as any[])[0] ? mapUser((rows as any[])[0]) : null;
   }
   return (await readAppData()).users.find((user) => user.email === email) || null;
 }
 
 export async function createUserRecord(user: Omit<StoredUser, "id" | "createdAt">) {
-  if (usePrisma()) {
-    const row = await (prisma as any).user.create({
-      data: {
-        email: user.email,
-        passwordHash: user.passwordHash,
-        role: user.role,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        company: user.company,
-        phone: user.phone
-      }
-    });
-    return mapUser(row);
+  if (useMysql()) {
+    const [result] = await pool.query(
+      "INSERT INTO users (email, password_hash, role, first_name, last_name, company, phone) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [user.email, user.passwordHash, user.role, user.firstName, user.lastName, user.company, user.phone]
+    );
+    const id = (result as any).insertId;
+    const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
+    return mapUser((rows as any[])[0]);
   }
   return updateAppData((data) => {
     const created: StoredUser = { id: nextId(data.users), createdAt: new Date().toISOString(), ...user };
@@ -160,22 +155,13 @@ export async function createUserRecord(user: Omit<StoredUser, "id" | "createdAt"
 }
 
 export async function createSessionRecord(session: StoredSession) {
-  if (usePrisma()) {
-    const row = await (prisma as any).session.create({
-      data: {
-        id: session.id,
-        userId: session.userId,
-        email: session.email,
-        role: session.role,
-        userAgent: session.userAgent,
-        ipAddress: session.ipAddress,
-        createdAt: session.createdAt,
-        lastSeenAt: session.lastSeenAt,
-        expiresAt: session.expiresAt,
-        revokedAt: session.revokedAt
-      }
-    });
-    return mapSession(row);
+  if (useMysql()) {
+    await pool.query(
+      "INSERT INTO sessions (id, user_id, email, role, user_agent, ip_address, created_at, last_seen_at, expires_at, revoked_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [session.id, session.userId, session.email, session.role, session.userAgent, session.ipAddress, new Date(session.createdAt), new Date(session.lastSeenAt), new Date(session.expiresAt), session.revokedAt ? new Date(session.revokedAt) : null]
+    );
+    const [rows] = await pool.query("SELECT * FROM sessions WHERE id = ?", [session.id]);
+    return mapSession((rows as any[])[0]);
   }
   return updateAppData((data) => {
     data.sessions.push(session);
@@ -184,23 +170,35 @@ export async function createSessionRecord(session: StoredSession) {
 }
 
 export async function getSessionRecord(id: string) {
-  if (usePrisma()) {
-    const row = await (prisma as any).session.findUnique({ where: { id } });
-    return row ? mapSession(row) : null;
+  if (useMysql()) {
+    const [rows] = await pool.query("SELECT * FROM sessions WHERE id = ? LIMIT 1", [id]);
+    return (rows as any[])[0] ? mapSession((rows as any[])[0]) : null;
   }
   return (await readAppData()).sessions.find((session) => session.id === id) || null;
 }
 
 export async function getSessions(filters?: { userId?: number; activeOnly?: boolean }) {
-  if (usePrisma()) {
-    const where: Record<string, unknown> = {};
-    if (filters?.userId) where.userId = filters.userId;
-    if (filters?.activeOnly) {
-      where.revokedAt = null;
-      where.expiresAt = { gt: new Date() };
+  if (useMysql()) {
+    let query = "SELECT * FROM sessions";
+    const params: any[] = [];
+    const conditions: string[] = [];
+    
+    if (filters?.userId) {
+      conditions.push("user_id = ?");
+      params.push(filters.userId);
     }
-    const rows = await (prisma as any).session.findMany({ where, orderBy: { createdAt: "desc" } });
-    return rows.map(mapSession);
+    if (filters?.activeOnly) {
+      conditions.push("revoked_at IS NULL");
+      conditions.push("expires_at > NOW()");
+    }
+    
+    if (conditions.length > 0) {
+      query += " WHERE " + conditions.join(" AND ");
+    }
+    query += " ORDER BY created_at DESC";
+    
+    const [rows] = await pool.query(query, params);
+    return (rows as any[]).map(mapSession);
   }
   return (await readAppData()).sessions
     .filter((session) => {
@@ -212,12 +210,10 @@ export async function getSessions(filters?: { userId?: number; activeOnly?: bool
 }
 
 export async function touchSessionRecord(id: string) {
-  if (usePrisma()) {
-    const row = await (prisma as any).session.update({
-      where: { id },
-      data: { lastSeenAt: new Date() }
-    });
-    return mapSession(row);
+  if (useMysql()) {
+    await pool.query("UPDATE sessions SET last_seen_at = NOW() WHERE id = ?", [id]);
+    const [rows] = await pool.query("SELECT * FROM sessions WHERE id = ?", [id]);
+    return mapSession((rows as any[])[0]);
   }
   return updateAppData((data) => {
     const session = data.sessions.find((entry) => entry.id === id);
@@ -228,12 +224,10 @@ export async function touchSessionRecord(id: string) {
 }
 
 export async function revokeSessionRecord(id: string) {
-  if (usePrisma()) {
-    const row = await (prisma as any).session.update({
-      where: { id },
-      data: { revokedAt: new Date() }
-    });
-    return mapSession(row);
+  if (useMysql()) {
+    await pool.query("UPDATE sessions SET revoked_at = NOW() WHERE id = ?", [id]);
+    const [rows] = await pool.query("SELECT * FROM sessions WHERE id = ?", [id]);
+    return mapSession((rows as any[])[0]);
   }
   return updateAppData((data) => {
     const session = data.sessions.find((entry) => entry.id === id);
@@ -244,15 +238,14 @@ export async function revokeSessionRecord(id: string) {
 }
 
 export async function revokeSessionsForUser(userId: number, exceptId?: string) {
-  if (usePrisma()) {
-    await (prisma as any).session.updateMany({
-      where: {
-        userId,
-        revokedAt: null,
-        ...(exceptId ? { NOT: { id: exceptId } } : {})
-      },
-      data: { revokedAt: new Date() }
-    });
+  if (useMysql()) {
+    let query = "UPDATE sessions SET revoked_at = NOW() WHERE user_id = ? AND revoked_at IS NULL";
+    const params: any[] = [userId];
+    if (exceptId) {
+      query += " AND id != ?";
+      params.push(exceptId);
+    }
+    await pool.query(query, params);
     return getSessions({ userId });
   }
   return updateAppData((data) => {
@@ -266,9 +259,10 @@ export async function revokeSessionsForUser(userId: number, exceptId?: string) {
 }
 
 export async function updateUserRoleRecord(userId: number, role: StoredUser["role"]) {
-  if (usePrisma()) {
-    const row = await (prisma as any).user.update({ where: { id: userId }, data: { role } });
-    return mapUser(row);
+  if (useMysql()) {
+    await pool.query("UPDATE users SET role = ? WHERE id = ?", [role, userId]);
+    const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [userId]);
+    return mapUser((rows as any[])[0]);
   }
   return updateAppData((data) => {
     const existing = data.users.find((user) => user.id === userId);
@@ -279,16 +273,43 @@ export async function updateUserRoleRecord(userId: number, role: StoredUser["rol
 }
 
 export async function getTurbos(filters?: TurboSearch) {
-  if (usePrisma()) {
-    const where: Record<string, unknown> = {};
-    if (filters?.partNumber) where.sku = { contains: filters.partNumber };
-    if (filters?.make) where.make = filters.make;
-    if (filters?.model) where.model = filters.model;
-    if (filters?.engine) where.engine = filters.engine;
-    if (filters?.year) where.year = filters.year;
-    if (filters?.bhp) where.bhp = filters.bhp;
-    const rows = await (prisma as any).turbo.findMany({ where, orderBy: { createdAt: "desc" } });
-    return rows.map(mapTurbo);
+  if (useMysql()) {
+    let query = "SELECT * FROM turbos";
+    const params: any[] = [];
+    const conditions: string[] = [];
+    
+    if (filters?.partNumber) {
+      conditions.push("sku LIKE ?");
+      params.push(`%${filters.partNumber}%`);
+    }
+    if (filters?.make) {
+      conditions.push("make = ?");
+      params.push(filters.make);
+    }
+    if (filters?.model) {
+      conditions.push("model = ?");
+      params.push(filters.model);
+    }
+    if (filters?.engine) {
+      conditions.push("engine = ?");
+      params.push(filters.engine);
+    }
+    if (filters?.year) {
+      conditions.push("year = ?");
+      params.push(filters.year);
+    }
+    if (filters?.bhp) {
+      conditions.push("bhp = ?");
+      params.push(filters.bhp);
+    }
+    
+    if (conditions.length > 0) {
+      query += " WHERE " + conditions.join(" AND ");
+    }
+    query += " ORDER BY created_at DESC";
+    
+    const [rows] = await pool.query(query, params);
+    return (rows as any[]).map(mapTurbo);
   }
   return (await readAppData()).turbos.filter((turbo) => {
     if (filters?.partNumber && !turbo.sku.includes(filters.partNumber)) return false;
@@ -302,41 +323,30 @@ export async function getTurbos(filters?: TurboSearch) {
 }
 
 export async function getTurboById(id: number) {
-  if (usePrisma()) {
-    const row = await (prisma as any).turbo.findUnique({ where: { id } });
-    return row ? mapTurbo(row) : null;
+  if (useMysql()) {
+    const [rows] = await pool.query("SELECT * FROM turbos WHERE id = ? LIMIT 1", [id]);
+    return (rows as any[])[0] ? mapTurbo((rows as any[])[0]) : null;
   }
   return (await readAppData()).turbos.find((turbo) => turbo.id === id) || null;
 }
 
 export async function getTurboBySlug(slug: string) {
-  if (usePrisma()) {
-    const row = await (prisma as any).turbo.findUnique({ where: { seoSlug: slug } });
-    return row ? mapTurbo(row) : null;
+  if (useMysql()) {
+    const [rows] = await pool.query("SELECT * FROM turbos WHERE seo_slug = ? LIMIT 1", [slug]);
+    return (rows as any[])[0] ? mapTurbo((rows as any[])[0]) : null;
   }
   return (await readAppData()).turbos.find((turbo) => turbo.seoSlug === slug) || null;
 }
 
 export async function createTurboRecord(turbo: Omit<StoredTurbo, "id" | "createdAt" | "updatedAt">) {
-  if (usePrisma()) {
-    const row = await (prisma as any).turbo.create({
-      data: {
-        sku: turbo.sku,
-        make: turbo.make,
-        model: turbo.model,
-        year: turbo.year,
-        engine: turbo.engine,
-        bhp: turbo.bhp,
-        type: turbo.type,
-        price: turbo.price,
-        tradePrice: turbo.tradePrice,
-        stock: turbo.stock,
-        images: turbo.images,
-        description: turbo.description,
-        seoSlug: turbo.seoSlug
-      }
-    });
-    return mapTurbo(row);
+  if (useMysql()) {
+    const [result] = await pool.query(
+      "INSERT INTO turbos (sku, make, model, year, engine, bhp, type, price, trade_price, stock, images, description, seo_slug) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [turbo.sku, turbo.make, turbo.model, turbo.year, turbo.engine, turbo.bhp, turbo.type, turbo.price, turbo.tradePrice, turbo.stock, JSON.stringify(turbo.images), turbo.description, turbo.seoSlug]
+    );
+    const id = (result as any).insertId;
+    const [rows] = await pool.query("SELECT * FROM turbos WHERE id = ?", [id]);
+    return mapTurbo((rows as any[])[0]);
   }
   return updateAppData((data) => {
     const created: StoredTurbo = {
@@ -351,26 +361,30 @@ export async function createTurboRecord(turbo: Omit<StoredTurbo, "id" | "created
 }
 
 export async function updateTurboRecord(id: number, patch: Partial<StoredTurbo>) {
-  if (usePrisma()) {
-    const row = await (prisma as any).turbo.update({
-      where: { id },
-      data: {
-        sku: patch.sku,
-        make: patch.make,
-        model: patch.model,
-        year: patch.year,
-        engine: patch.engine,
-        bhp: patch.bhp,
-        type: patch.type,
-        price: patch.price,
-        tradePrice: patch.tradePrice,
-        stock: patch.stock,
-        images: patch.images,
-        description: patch.description,
-        seoSlug: patch.seoSlug
-      }
-    });
-    return mapTurbo(row);
+  if (useMysql()) {
+    const updates: string[] = [];
+    const params: any[] = [];
+    
+    if (patch.sku !== undefined) { updates.push("sku = ?"); params.push(patch.sku); }
+    if (patch.make !== undefined) { updates.push("make = ?"); params.push(patch.make); }
+    if (patch.model !== undefined) { updates.push("model = ?"); params.push(patch.model); }
+    if (patch.year !== undefined) { updates.push("year = ?"); params.push(patch.year); }
+    if (patch.engine !== undefined) { updates.push("engine = ?"); params.push(patch.engine); }
+    if (patch.bhp !== undefined) { updates.push("bhp = ?"); params.push(patch.bhp); }
+    if (patch.type !== undefined) { updates.push("type = ?"); params.push(patch.type); }
+    if (patch.price !== undefined) { updates.push("price = ?"); params.push(patch.price); }
+    if (patch.tradePrice !== undefined) { updates.push("trade_price = ?"); params.push(patch.tradePrice); }
+    if (patch.stock !== undefined) { updates.push("stock = ?"); params.push(patch.stock); }
+    if (patch.images !== undefined) { updates.push("images = ?"); params.push(JSON.stringify(patch.images)); }
+    if (patch.description !== undefined) { updates.push("description = ?"); params.push(patch.description); }
+    if (patch.seoSlug !== undefined) { updates.push("seo_slug = ?"); params.push(patch.seoSlug); }
+    
+    if (updates.length > 0) {
+      params.push(id);
+      await pool.query(`UPDATE turbos SET ${updates.join(", ")} WHERE id = ?`, params);
+    }
+    const [rows] = await pool.query("SELECT * FROM turbos WHERE id = ?", [id]);
+    return mapTurbo((rows as any[])[0]);
   }
   return updateAppData((data) => {
     const existing = data.turbos.find((turbo) => turbo.id === id);
@@ -381,9 +395,11 @@ export async function updateTurboRecord(id: number, patch: Partial<StoredTurbo>)
 }
 
 export async function deleteTurboRecord(id: number) {
-  if (usePrisma()) {
-    const row = await (prisma as any).turbo.delete({ where: { id } });
-    return mapTurbo(row);
+  if (useMysql()) {
+    const [rows] = await pool.query("SELECT * FROM turbos WHERE id = ?", [id]);
+    if ((rows as any[]).length === 0) return null;
+    await pool.query("DELETE FROM turbos WHERE id = ?", [id]);
+    return mapTurbo((rows as any[])[0]);
   }
   return updateAppData((data) => {
     const index = data.turbos.findIndex((turbo) => turbo.id === id);
@@ -393,8 +409,9 @@ export async function deleteTurboRecord(id: number) {
 }
 
 export async function findVehicleByRegistration(registration: string) {
-  if (usePrisma()) {
-    const row = await (prisma as any).vehicle.findUnique({ where: { registration } });
+  if (useMysql()) {
+    const [rows] = await pool.query("SELECT * FROM vehicles WHERE registration = ? LIMIT 1", [registration]);
+    const row = (rows as any[])[0];
     return row
       ? {
           registration: row.registration,
@@ -421,21 +438,15 @@ export async function upsertVehicleRecord(input: {
   colour?: string;
   source: "api" | "db" | "cache";
 }) {
-  if (usePrisma()) {
-    const row = await (prisma as any).vehicle.upsert({
-      where: { registration: input.registration },
-      update: {
-        make: input.make,
-        model: input.model,
-        year: input.year,
-        engine: input.engine,
-        fuel: input.fuel,
-        colour: input.colour,
-        source: input.source
-      },
-      create: input
-    });
-    return row;
+  if (useMysql()) {
+    await pool.query(
+      `INSERT INTO vehicles (registration, make, model, year, engine, fuel, colour, source) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?) 
+       ON DUPLICATE KEY UPDATE make=VALUES(make), model=VALUES(model), year=VALUES(year), engine=VALUES(engine), fuel=VALUES(fuel), colour=VALUES(colour), source=VALUES(source)`,
+      [input.registration, input.make, input.model, input.year, input.engine, input.fuel, input.colour, input.source]
+    );
+    const [rows] = await pool.query("SELECT * FROM vehicles WHERE registration = ?", [input.registration]);
+    return (rows as any[])[0];
   }
   return input;
 }
@@ -446,7 +457,7 @@ export async function createLookupRecord(input: {
   userIp?: string;
   vehicle?: Record<string, unknown>;
 }) {
-  if (usePrisma()) {
+  if (useMysql()) {
     let vehicleId: number | undefined;
     if (input.vehicle) {
       const vehicle = await upsertVehicleRecord({
@@ -459,17 +470,23 @@ export async function createLookupRecord(input: {
         colour: (input.vehicle.colour as string) || undefined,
         source: input.source
       });
-      vehicleId = (vehicle as any).id;
+      vehicleId = vehicle.id;
     }
-    const row = await (prisma as any).lookupLog.create({
-      data: {
-        registration: input.registration,
-        source: input.source,
-        userIp: input.userIp,
-        vehicleId
-      },
-      include: { vehicle: true }
-    });
+    
+    const [result] = await pool.query(
+      "INSERT INTO lookup_log (registration, source, user_ip, vehicleId) VALUES (?, ?, ?, ?)",
+      [input.registration, input.source, input.userIp, vehicleId]
+    );
+    
+    const id = (result as any).insertId;
+    const [rows] = await pool.query(
+      "SELECT l.*, v.make as v_make, v.model as v_model, v.year as v_year, v.engine as v_engine, v.fuel as v_fuel, v.colour as v_colour FROM lookup_log l LEFT JOIN vehicles v ON l.vehicleId = v.id WHERE l.id = ?",
+      [id]
+    );
+    const row = (rows as any[])[0];
+    if (row.vehicleId) {
+       row.vehicle = { registration: row.registration, make: row.v_make, model: row.v_model, year: row.v_year, engine: row.v_engine, fuel: row.v_fuel, colour: row.v_colour };
+    }
     return mapLookup(row);
   }
   return updateAppData((data) => {
@@ -487,12 +504,16 @@ export async function createLookupRecord(input: {
 }
 
 export async function getLookupRecords() {
-  if (usePrisma()) {
-    const rows = await (prisma as any).lookupLog.findMany({
-      include: { vehicle: true },
-      orderBy: { timestamp: "desc" }
+  if (useMysql()) {
+    const [rows] = await pool.query(
+      "SELECT l.*, v.make as v_make, v.model as v_model, v.year as v_year, v.engine as v_engine, v.fuel as v_fuel, v.colour as v_colour FROM lookup_log l LEFT JOIN vehicles v ON l.vehicleId = v.id ORDER BY l.timestamp DESC"
+    );
+    return (rows as any[]).map((row) => {
+      if (row.vehicleId) {
+        row.vehicle = { registration: row.registration, make: row.v_make, model: row.v_model, year: row.v_year, engine: row.v_engine, fuel: row.v_fuel, colour: row.v_colour };
+      }
+      return mapLookup(row);
     });
-    return rows.map(mapLookup);
   }
   return (await readAppData()).lookups;
 }
@@ -508,31 +529,31 @@ export async function getLookupStats() {
 }
 
 export async function createOrderRecord(order: Omit<StoredOrder, "id" | "createdAt">) {
-  if (usePrisma()) {
-    const row = await (prisma as any).order.create({
-      data: {
-        userId: order.userId,
-        email: order.email,
-        status: order.status,
-        total: order.total,
-        stripePaymentId: order.stripePaymentId,
-        stripeSessionId: order.stripeSessionId,
-        invoiceNumber: order.invoiceNumber,
-        invoicePath: order.invoicePath,
-        shippingAddress: order.shippingAddress,
-        items: {
-          create: order.items.map((item) => ({
-            turboId: item.turboId,
-            sku: item.sku,
-            name: item.name,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice
-          }))
-        }
-      },
-      include: { items: { include: { turbo: true } } }
-    });
-    return mapOrder(row);
+  if (useMysql()) {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      const [orderResult] = await connection.query(
+        "INSERT INTO orders (user_id, email, status, total, stripe_payment_id, stripe_session_id, invoice_number, invoice_path, shipping_address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [order.userId, order.email, order.status, order.total, order.stripePaymentId, order.stripeSessionId, order.invoiceNumber, order.invoicePath, order.shippingAddress]
+      );
+      const orderId = (orderResult as any).insertId;
+      
+      for (const item of order.items) {
+        await connection.query(
+          "INSERT INTO order_items (order_id, turbo_id, sku, name, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?)",
+          [orderId, item.turboId, item.sku, item.name, item.quantity, item.unitPrice]
+        );
+      }
+      await connection.commit();
+      
+      return getOrderRecordById(orderId);
+    } catch (e) {
+      await connection.rollback();
+      throw e;
+    } finally {
+      connection.release();
+    }
   }
   return updateAppData((data) => {
     const created: StoredOrder = {
@@ -546,19 +567,22 @@ export async function createOrderRecord(order: Omit<StoredOrder, "id" | "created
 }
 
 export async function updateOrderPaymentRecord(orderId: number, patch: Partial<StoredOrder>) {
-  if (usePrisma()) {
-    const row = await (prisma as any).order.update({
-      where: { id: orderId },
-      data: {
-        status: patch.status,
-        stripePaymentId: patch.stripePaymentId,
-        stripeSessionId: patch.stripeSessionId,
-        invoiceNumber: patch.invoiceNumber,
-        invoicePath: patch.invoicePath
-      },
-      include: { items: { include: { turbo: true } } }
-    });
-    return mapOrder(row);
+  if (useMysql()) {
+    const updates: string[] = [];
+    const params: any[] = [];
+    
+    if (patch.status !== undefined) { updates.push("status = ?"); params.push(patch.status); }
+    if (patch.stripePaymentId !== undefined) { updates.push("stripe_payment_id = ?"); params.push(patch.stripePaymentId); }
+    if (patch.stripeSessionId !== undefined) { updates.push("stripe_session_id = ?"); params.push(patch.stripeSessionId); }
+    if (patch.invoiceNumber !== undefined) { updates.push("invoice_number = ?"); params.push(patch.invoiceNumber); }
+    if (patch.invoicePath !== undefined) { updates.push("invoice_path = ?"); params.push(patch.invoicePath); }
+    
+    if (updates.length > 0) {
+      params.push(orderId);
+      await pool.query(`UPDATE orders SET ${updates.join(", ")} WHERE id = ?`, params);
+    }
+    
+    return getOrderRecordById(orderId);
   }
   return updateAppData((data) => {
     const existing = data.orders.find((order) => order.id === orderId);
@@ -569,47 +593,69 @@ export async function updateOrderPaymentRecord(orderId: number, patch: Partial<S
 }
 
 export async function getOrdersForUser(userId: number, email: string) {
-  if (usePrisma()) {
-    const rows = await (prisma as any).order.findMany({
-      where: { OR: [{ userId }, { email }] },
-      include: { items: { include: { turbo: true } } },
-      orderBy: { createdAt: "desc" }
-    });
-    return rows.map(mapOrder);
+  if (useMysql()) {
+    const [rows] = await pool.query("SELECT * FROM orders WHERE user_id = ? OR email = ? ORDER BY created_at DESC", [userId, email]);
+    
+    const orders = (rows as any[]).map(mapOrder);
+    for (const order of orders) {
+      const [items] = await pool.query("SELECT i.*, t.make, t.model, t.engine FROM order_items i JOIN turbos t ON i.turbo_id = t.id WHERE i.order_id = ?", [order.id]);
+      order.items = (items as any[]).map(item => ({
+        turboId: item.turbo_id,
+        sku: item.sku,
+        name: item.name || `${item.make || ""} ${item.model || ""} ${item.engine || ""}`.trim(),
+        quantity: item.quantity,
+        unitPrice: Number(item.unit_price)
+      }));
+    }
+    return orders;
   }
   return (await readAppData()).orders.filter((order) => order.userId === userId || order.email === email);
 }
 
 export async function getAllOrders() {
-  if (usePrisma()) {
-    const rows = await (prisma as any).order.findMany({
-      include: { items: { include: { turbo: true } } },
-      orderBy: { createdAt: "desc" }
-    });
-    return rows.map(mapOrder);
+  if (useMysql()) {
+    const [rows] = await pool.query("SELECT * FROM orders ORDER BY created_at DESC");
+    
+    const orders = (rows as any[]).map(mapOrder);
+    for (const order of orders) {
+      const [items] = await pool.query("SELECT i.*, t.make, t.model, t.engine FROM order_items i JOIN turbos t ON i.turbo_id = t.id WHERE i.order_id = ?", [order.id]);
+      order.items = (items as any[]).map(item => ({
+        turboId: item.turbo_id,
+        sku: item.sku,
+        name: item.name || `${item.make || ""} ${item.model || ""} ${item.engine || ""}`.trim(),
+        quantity: item.quantity,
+        unitPrice: Number(item.unit_price)
+      }));
+    }
+    return orders;
   }
   return (await readAppData()).orders;
 }
 
 export async function getOrderRecordById(id: number) {
-  if (usePrisma()) {
-    const row = await (prisma as any).order.findUnique({
-      where: { id },
-      include: { items: { include: { turbo: true } } }
-    });
-    return row ? mapOrder(row) : null;
+  if (useMysql()) {
+    const [rows] = await pool.query("SELECT * FROM orders WHERE id = ? LIMIT 1", [id]);
+    const row = (rows as any[])[0];
+    if (!row) return null;
+    
+    const order = mapOrder(row);
+    const [items] = await pool.query("SELECT i.*, t.make, t.model, t.engine FROM order_items i JOIN turbos t ON i.turbo_id = t.id WHERE i.order_id = ?", [id]);
+    order.items = (items as any[]).map(item => ({
+      turboId: item.turbo_id,
+      sku: item.sku,
+      name: item.name || `${item.make || ""} ${item.model || ""} ${item.engine || ""}`.trim(),
+      quantity: item.quantity,
+      unitPrice: Number(item.unit_price)
+    }));
+    return order;
   }
   return (await readAppData()).orders.find((order) => order.id === id) || null;
 }
 
 export async function updateOrderStatusRecord(id: number, status: string) {
-  if (usePrisma()) {
-    const row = await (prisma as any).order.update({
-      where: { id },
-      data: { status },
-      include: { items: { include: { turbo: true } } }
-    });
-    return mapOrder(row);
+  if (useMysql()) {
+    await pool.query("UPDATE orders SET status = ? WHERE id = ?", [status, id]);
+    return getOrderRecordById(id);
   }
   return updateAppData((data) => {
     const existing = data.orders.find((order) => order.id === id);
@@ -620,28 +666,34 @@ export async function updateOrderStatusRecord(id: number, status: string) {
 }
 
 export async function getIpBlocks() {
-  if (usePrisma()) {
-    const rows = await (prisma as any).ipBlock.findMany({ orderBy: { blockedAt: "desc" } });
-    return rows.map((row: any) => ({
+  if (useMysql()) {
+    const [rows] = await pool.query("SELECT * FROM ip_blocks ORDER BY blocked_at DESC");
+    return (rows as any[]).map((row: any) => ({
       id: row.id,
-      ipAddress: row.ipAddress,
+      ipAddress: row.ip_address,
       reason: row.reason,
-      redirectUrl: row.redirectUrl || undefined,
-      blockedAt: new Date(row.blockedAt).toISOString()
+      redirectUrl: row.redirect_url || undefined,
+      blockedAt: new Date(row.blocked_at).toISOString()
     }));
   }
   return (await readAppData()).ipBlocks;
 }
 
 export async function createIpBlockRecord(block: Omit<StoredIpBlock, "id" | "blockedAt">) {
-  if (usePrisma()) {
-    const row = await (prisma as any).ipBlock.create({ data: block });
+  if (useMysql()) {
+    const [result] = await pool.query(
+      "INSERT INTO ip_blocks (ip_address, reason, redirect_url) VALUES (?, ?, ?)",
+      [block.ipAddress, block.reason, block.redirectUrl]
+    );
+    const id = (result as any).insertId;
+    const [rows] = await pool.query("SELECT * FROM ip_blocks WHERE id = ?", [id]);
+    const row = (rows as any[])[0];
     return {
       id: row.id,
-      ipAddress: row.ipAddress,
+      ipAddress: row.ip_address,
       reason: row.reason,
-      redirectUrl: row.redirectUrl || undefined,
-      blockedAt: new Date(row.blockedAt).toISOString()
+      redirectUrl: row.redirect_url || undefined,
+      blockedAt: new Date(row.blocked_at).toISOString()
     };
   }
   return updateAppData((data) => {
@@ -652,14 +704,17 @@ export async function createIpBlockRecord(block: Omit<StoredIpBlock, "id" | "blo
 }
 
 export async function deleteIpBlockRecord(blockId: number) {
-  if (usePrisma()) {
-    const row = await (prisma as any).ipBlock.delete({ where: { id: blockId } });
+  if (useMysql()) {
+    const [rows] = await pool.query("SELECT * FROM ip_blocks WHERE id = ?", [blockId]);
+    if ((rows as any[]).length === 0) return null;
+    const row = (rows as any[])[0];
+    await pool.query("DELETE FROM ip_blocks WHERE id = ?", [blockId]);
     return {
       id: row.id,
-      ipAddress: row.ipAddress,
+      ipAddress: row.ip_address,
       reason: row.reason,
-      redirectUrl: row.redirectUrl || undefined,
-      blockedAt: new Date(row.blockedAt).toISOString()
+      redirectUrl: row.redirect_url || undefined,
+      blockedAt: new Date(row.blocked_at).toISOString()
     };
   }
   return updateAppData((data) => {

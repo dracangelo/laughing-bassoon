@@ -3,7 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { userSchema } from "@/validators/userSchema";
 import { authenticateUser } from "@/lib/auth";
 
-export const authOptions: NextAuthOptions = {
+const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   providers: [
     CredentialsProvider({

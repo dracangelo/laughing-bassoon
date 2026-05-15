@@ -1,6 +1,7 @@
 import axios from "axios";
 import { nextId, updateAppData } from "@/lib/persistence";
-import { sanitizePartNumber, sanitizeText } from "@/lib/sanitize";
+import { sanitizeText } from "@/lib/sanitize";
+import { sanitizePartNumber } from "@/lib/sanitize-strings";
 
 export async function submitEbayListing(input: {
   turboId?: number;
